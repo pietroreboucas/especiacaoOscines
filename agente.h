@@ -37,6 +37,8 @@ public:
     double getValorCanto() const;
     vector <agente *> getVizinhanca() const;
 
+    int inutil=0;
+
 private:
     int RG;                        // ESSA VARIAVEL NÃO FOI CORRETAMENTE UTILIZADAD
     bool ehMacho;                  // "ehMacho=true" o agente é macho, "ehMacho=false" o agente é fêmea
