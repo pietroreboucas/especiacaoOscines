@@ -43,7 +43,7 @@ private:
     int RG;                        // ESSA VARIAVEL NÃO FOI CORRETAMENTE UTILIZADAD
     bool ehMacho;                  // "ehMacho=true" o agente é macho, "ehMacho=false" o agente é fêmea
     posicao local;                 // objeto da classe posicao chamado local (posição do agente)
-    movimentacao caminhada;        // objeto  da classe movimentacao chamado caminhada (possui as regras de movimentação)
+    movimentacao movimento;        // objeto  da classe movimentacao chamado caminhada (possui as regras de movimentação)
     vector <agente *> vizinhanca;  // vetor de ponteiros com vizinhos de um determinado agente
     agente *parceiro;              // ponteiro que aponta para o parceiro de uma fêmea
     double raioVizinhanca;         // o tamanho da vizinhança no qual consideraremos agentes como vizinhos

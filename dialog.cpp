@@ -26,10 +26,6 @@ void Dialog::paintEvent(QPaintEvent *e) // esse método aqui é pra desenhar as 
     double escalaX=(double)tamanhoJanelaX/this->caatinga.getTamanhoDoMundo();
     double escalaY=(double)tamanhoJanelaY/this->caatinga.getTamanhoDoMundo();
 
-    this->ui->spinBoxIteracao->setValue(this->caatinga.getContadorDeIteracoes());
-    this->ui->spinBoxGeracao->setValue(this->caatinga.getNumeroGeracoes());
-    this->ui->progressBarEspeciacao->setValue(this->caatinga.getDistanciaGene());
-
     posicao pincel;
     romeroBritto.setPen(QColor(0,0,0,0));
 
@@ -73,6 +69,6 @@ void Dialog::paintEvent(QPaintEvent *e) // esse método aqui é pra desenhar as 
 
 void Dialog::on_pushButton_rodaMundo_clicked()
 {
-    this->caatinga.rodaMundo();
+    this->caatinga.rodaGeracao();
     this->repaint();
 }

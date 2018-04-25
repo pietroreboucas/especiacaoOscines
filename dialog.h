@@ -22,9 +22,9 @@ private:
 
 protected:
     void paintEvent(QPaintEvent *e);          // necessário para usar o Qpainter para printar os agentes na tela
+
 private slots:
     void on_pushButton_rodaMundo_clicked();
-
 };
 
 #endif // DIALOG_H

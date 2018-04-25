@@ -8,60 +8,60 @@ ambiente::ambiente()
 
     this->tamanhoDoMundo=1000;
     this->capacidadeDeSuporte=10000;
-    this->epocaDeAcasalamento=false;
     this->contadorDeGeracoes=0;
-    this->contadorDeIteracoes=0;
     this->especiacao=false;
 
-    // vamos definir a capacidade do vetor de agentes como o dobro da capacidade de suporte
+    // vamos definir a capacidade do vetor de agentes como o triplo da capacidade de suporte
 
-    this->bando.reserve(this->capacidadeDeSuporte*2);
+    this->bando.reserve(this->capacidadeDeSuporte*3);
 
     // agora vamos criar nosso agentes
 
     for (int i=0; i<(this->capacidadeDeSuporte/2); i++)
     {
-        this->sorteioBando.push_back(i);
+        this->passaro.push_back(i);
         agente piupiu(true);
         this->bando.push_back(piupiu);
     }
     for (int i=0; i<(this->capacidadeDeSuporte/2); i++)
     {
-        this->sorteioBando.push_back(i+(capacidadeDeSuporte/2));
+        this->passaro.push_back(i+(capacidadeDeSuporte/2));
         agente piupiu(false);
         this->bando.push_back(piupiu);
     }
-
-    this->distanciaGene=0;
 }
 
-void ambiente::rodaMundo()
+void ambiente::rodaGeracao()
 {
-    // primeiramente checaremos se nosso bando possui parceiros o suficiente para uma época de acasalamento
+    // cada geração corresponde a 1 ano
+    // o 12 mês do ano corresponde a época de acasalamento
 
-    this->epocaDeAcasalamento=this->parceirosSuficientes();
-
-    if (this->epocaDeAcasalamento==true)
+    for(int mes=1;mes<=12;mes++)
     {
-        this->rodaAcasalamento();
-        this->acabandoRelacionamentos();
-//        this->atualizaPercepcao();
-//        this->aulaDeCanto();
-        this->derivaGenica();       
-        this->epocaDeAcasalamento=false;
-        this->contadorDeIteracoes=0;
-        this->contadorDeGeracoes++;
-        this->especiacao=this->criterioDeEspeciacao();
-    }
-    else
-    {
-        this->atualizaPercepcao();
-        this->rodaModelo();
-        this->realizaAtuacao();
+        if (mes==12)
+        {
+            this->rodaAcasalamento();
+            this->acabandoRelacionamentos();
+    //        this->atualizaPercepcao();
+    //        this->aulaDeCanto();
+            this->genocidio();
+        }
+        else
+        {
+            // primeiramente embaralhamos o vetor de sorteio
 
-        this->contadorDeIteracoes++;
-    }
+            shuffle(passaro.begin(),passaro.end(),std::default_random_engine(1));
 
+            // vamos então cada agente vai agir na ordem do vetor de sorteio
+
+            for (int j=0; j<this->bando.size(); j++)
+            {
+                this->atualizaPercepcao(this->passaro[j]);   // percepcao
+                this->bando[this->passaro[j]].rodaModelo();  // modelo de mundo
+                this->bando[this->passaro[j]].atuacao();     // atuacao
+            }
+        }
+    }
 }
 
 posicao ambiente::getLocal(int i)
@@ -97,75 +97,30 @@ double ambiente::getGeneCanto(int i)
     return this->bando[i].getGeneCanto();
 }
 
-int ambiente::getNumeroGeracoes()
+int ambiente::getContadorDeGeracoes() const
 {
-    return this->contadorDeGeracoes;
+    return contadorDeGeracoes;
 }
 
-bool ambiente::getEspeciacao() const
+void ambiente::atualizaPercepcao(int i)
 {
-    return especiacao;
-}
+    double distancia;   // distancia entre os agentes i e j
 
-int ambiente::getContadorDeIteracoes() const
-{
-    return contadorDeIteracoes;
-}
+    this->bando[i].limparVizinhanca();                // limpamos a vizinhança
 
-int ambiente::getDistanciaGene() const
-{
-    return distanciaGene;
-}
-
-void ambiente::atualizaPercepcao()
-{
-    double distancia;   // variavel auxiliar na qual armazenaremos a distancia entre os agentes a cada interação
-
-    for (int i=0; i<this->bando.size(); i++)                  // para cada agente
+    for (int j=0; j<this->bando.size(); j++)          // então para cada outro agente
     {
-        if (this->bando[i].getRelacionamentoSerio()==false)   // que não está em um relacionamento sério
-        {
-            this->bando[i].limparVizinhanca();                // limpamos a vizinhança
-            for (int j=0; j<this->bando.size(); j++)          // vamos então para cada outro agente
-            {
 
-                if (this->bando[j].getEhMacho()==true)        // se for macho
-                {
-                    distancia=this->calcularDistancia(i,j);            // calculamos a distância
-                    if (distancia<this->bando[i].getRaioVizinhanca())  // se essa for menor que o raioVizinhanca
-                    {
-                        this->bando[i].adicionarVizinhanca(&this->bando[j]);   // adiciona ele a vizinhança
-                    }
-                }
+        if (this->bando[j].getEhMacho()==true)        // se for macho
+        {
+            distancia=this->calcularDistancia(i,j);            // calculamos a distância
+            if (distancia<this->bando[i].getRaioVizinhanca())  // caso menor que o raioVizinhanca
+            {
+                this->bando[i].adicionarVizinhanca(&this->bando[j]);   // adiciona a vizinhança
             }
         }
     }
 
-
-}
-
-void ambiente::rodaModelo()
-{
-    // primeiramente vamos embaralhar o vetor de sorteio
-
-    shuffle(sorteioBando.begin(),sorteioBando.end(),std::default_random_engine(1));
-
-    // agora vamos rodar o modelo de mundo de cada agente na ordem sorteada pelo vetor
-
-    for (int i=0; i<this->bando.size(); i++)
-    {
-        this->bando[sorteioBando[i]].rodaModelo();
-    }
-}
-
-void ambiente::realizaAtuacao()
-{
-    // em nossa atuação a unica coisa que acontece é movimento (ou não), então realmente não importa quem vai primeiro
-
-    for (int i=0; i<this->bando.size(); i++)
-    {
-        this->bando[i].atuacao();
-    }
 }
 
 void ambiente::rodaAcasalamento()
@@ -211,18 +166,18 @@ void ambiente::rodaAcasalamento()
     }     
 }
 
-void ambiente::derivaGenica()
+void ambiente::genocidio()
 {
     // primeiramente vamos misturar as posições dos agentes no vetor de sorteio para que nenhum deles seja privilegiado
 
-    this->sorteioBando.clear();   // limpamos o vetor de sorteio
+    this->passaro.clear();   // limpamos o vetor de sorteio
 
     for (int i=0; i<this->bando.size(); i++)   // criamos um novo com o número certo de agentes
     {
-        this->sorteioBando.push_back(i);
+        this->passaro.push_back(i);
     }
 
-    shuffle(sorteioBando.begin(),sorteioBando.end(),std::default_random_engine(1));
+    shuffle(passaro.begin(),passaro.end(),std::default_random_engine(1));
 
     // quando o tamanho do bando é maior que a capacidade de suporte do ambiente
     // os agentes acima da capacidade de suporte são deletados
@@ -230,17 +185,20 @@ void ambiente::derivaGenica()
     if (this->bando.size()>=capacidadeDeSuporte)
     {
         int mortes=(this->bando.size()-capacidadeDeSuporte);
+
         for (int i=0; i<mortes; i++)
-            this->bando.erase(this->bando.begin()+this->sorteioBando[i]);
+        {
+            this->bando.erase(this->bando.begin()+this->passaro[i]);
+        }
     }
 
     // vamos sortear novamente o vetor de sorteio por via das dúvidas
 
-    this->sorteioBando.clear();   // limpamos o vetor de sorteio
+    this->passaro.clear();   // limpamos o vetor de sorteio
 
     for (int i=0; i<this->bando.size(); i++)   // criamos um novo com o número certo de agentes
     {
-        this->sorteioBando.push_back(i);
+        this->passaro.push_back(i);
     }
 }
 
@@ -286,60 +244,3 @@ double ambiente::calcularDistancia(int i, int j)
 
     return distancia;
 }
-
-bool ambiente::parceirosSuficientes()
-{
-    int numeroPassarosEmCasal=0;                // contador do número de pássaros em um casal
-
-    // checaremos um a um se os pássaros estão em um casal e acrescentaremos +1 ao contador sempre que sim
-
-    for (int i=0; i<this->bando.size(); i++)
-    {
-        if (this->bando[i].getRelacionamentoSerio()==true)
-        {
-            numeroPassarosEmCasal++;
-        }
-    }
-    // queremos que quando o número de passáros em casais seja maior que metade da capacidade de suporte
-    // se diga que há parceiros o suficiente para uma época de acasalamento
-    // essa checagem será feita no inicio de cada rodaMundo
-    
-    if (numeroPassarosEmCasal>=(this->capacidadeDeSuporte/2))
-    {
-        return true;     // há parceiros o suficiente para uma época de acasalamento o/
-    }
-    else
-    {
-        return false;    // não há parceiros o suficiente =(
-    }
-}
-
-bool ambiente::criterioDeEspeciacao()
-{
-    double geneMenor=this->bando[0].getGeneCanto();
-    double geneMaior=this->bando[0].getGeneCanto();
-
-    for (int i=0; i<this->bando.size(); i++)
-    {
-        if(this->bando[i].getGeneCanto()<geneMenor)
-        {
-            geneMenor=this->bando[i].getGeneCanto();
-        }
-        if(this->bando[i].getGeneCanto()>geneMaior)
-        {
-            geneMaior=this->bando[i].getGeneCanto();
-        }
-    }
-
-    this->distanciaGene=(int)(geneMaior-geneMenor)*100;
-
-    if ((geneMaior-geneMenor)<1)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-

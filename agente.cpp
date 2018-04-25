@@ -12,9 +12,9 @@ agente::agente(bool macho)
     this->local.setX((double)rand()/RAND_MAX);                   // inicializando as variáveis do objeto "local"
     this->local.setY((double)rand()/RAND_MAX);                   // da classe "posição"
 
-    this->caminhada.setPasso(0.001);                             // inicializando as varáveis do objeto "caminhada"
-    this->caminhada.setDirecao((double)rand()/RAND_MAX*360);     // da classe "movimentação"
-    this->caminhada.setAnguloDeVisao(40);
+    this->movimento.setPasso(0.001);                             // inicializando as varáveis do objeto "caminhada"
+    this->movimento.setDirecao((double)rand()/RAND_MAX*360);     // da classe "movimentação"
+    this->movimento.setAnguloDeVisao(40);
 
     this->passoMutacao=0.02;
     this->probabilidadeMutacao=0.01;
@@ -30,7 +30,7 @@ agente::agente(bool macho)
 
     this->ehMacho=macho;                                 // assinalando o agente como macho (ou fêmea)
     this->relacionamentoSerio=false;                     // definindo o status de relacionamento do novo pássaro
-    this->raioVizinhanca=10*this->caminhada.getPasso();  // inicializando raio da vizinhança
+    this->raioVizinhanca=10*this->movimento.getPasso();  // inicializando raio da vizinhança
 }
 
 agente::agente(bool macho, double geneMae, double genePai, posicao localMae)
@@ -42,9 +42,9 @@ agente::agente(bool macho, double geneMae, double genePai, posicao localMae)
 
     this->local=localMae;   // inicializando as variáveis do objeto "local" será iniciada com o posicionamento da mãe
 
-    this->caminhada.setPasso(0.01);                              // inicializando as varáveis do objeto "caminhada"
-    this->caminhada.setDirecao((double)rand()/RAND_MAX*360);     // da classe "movimentação"
-    this->caminhada.setAnguloDeVisao(40);                        // não é diferente do outro construtor
+    this->movimento.setPasso(0.01);                              // inicializando as varáveis do objeto "caminhada"
+    this->movimento.setDirecao((double)rand()/RAND_MAX*360);     // da classe "movimentação"
+    this->movimento.setAnguloDeVisao(40);                        // não é diferente do outro construtor
 
     this->passoMutacao=0.02;
     this->probabilidadeMutacao=0.01;
@@ -107,11 +107,11 @@ void agente::rodaModelo()
 
     if (relacionamentoSerio==true)             // pássaro em um relacionamento sério
     {
-        this->caminhada.parado();              // fica esperando a época de acasalamento
+        this->movimento.parado();              // fica esperando a época de acasalamento
     }
     else                                       // pássaro solteiro
     {
-        this->caminhada.movimento();           // vai em busca de um parceiro
+        this->movimento.movimento();           // vai em busca de um parceiro
     }
 }
 
@@ -119,8 +119,8 @@ void agente::atuacao()
 {
     // primeiramente nos deslocamos a quantidade definida no 'rodaModelo'
 
-    this->local.acumulaX(this->caminhada.getDx());
-    this->local.acumulaY(this->caminhada.getDy());
+    this->local.acumulaX(this->movimento.getDx());
+    this->local.acumulaY(this->movimento.getDy());
 
     // depois do deslocamento aplicam-se as condições de contorno
 
