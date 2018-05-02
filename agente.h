@@ -37,35 +37,40 @@ public:
     double getValorCanto() const;
     vector <agente *> getVizinhanca() const;
 
-    int inutil=0;
-
 private:
-    int RG;                        // ESSA VARIAVEL NÃO FOI CORRETAMENTE UTILIZADAD
-    bool ehMacho;                  // "ehMacho=true" o agente é macho, "ehMacho=false" o agente é fêmea
-    posicao local;                 // objeto da classe posicao chamado local (posição do agente)
-    movimentacao movimento;        // objeto  da classe movimentacao chamado caminhada (possui as regras de movimentação)
+    /*#### variaveis de estado ####*/
+
+    bool ehMacho;                  // determina se temos um agente macho ou femea
+    bool emRelacionamento;         // o pássaro encontrou um par para a temporada de acasalamento
+    bool adulto;                   // para diferenciar adultos e filhotes
+    int tempoDeMaturacao;          // meses para que um filhote atinja a maturacao sexual
+    int contadorDeMeses;           // contabiliza o mes do ano que o agente está
+    int contadorDeAnos;
+    int idadeMaxima;
+
+    /*#### variaveis de espaciais e de interacao ####*/
+
+    posicao local;                 // objeto que possui a posicao do agente
+    movimentacao movimento;        // objeto que possui as regras de movimentação
     vector <agente *> vizinhanca;  // vetor de ponteiros com vizinhos de um determinado agente
     agente *parceiro;              // ponteiro que aponta para o parceiro de uma fêmea
-    double raioVizinhanca;         // o tamanho da vizinhança no qual consideraremos agentes como vizinhos
+    double raioVizinhanca;         // tamanho da vizinhanca de um agente
 
-    // o conceito de vizinho usado nesse código é:
-    // um pássaro de qualquer sexo é vizinho ao outro se caso ambos fossem machos um pudesse ouvir o outro
+        // o conceito de vizinho usado nesse código é:
+            // um pássaro de qualquer sexo é vizinho ao outro
+            //caso ambos fossem machos um pudesse ouvir o outro
 
-    // abaixo temos váriaveis relacionadas aos cantos que são reconhecidos
+    /*#### variaveis relacionadas aos cantos ####*/
 
-    double geneCanto;           // uma única variavel que determina onde começa genéticamente o range de cantos reconhecidos
-    double valorCanto;          // valor referente ao canto que o macho canta (pode ser ou não determinado por aprendizagem)
+    double geneCanto;           // determina onde começa genéticamente o range de cantos
+    double valorCanto;          // valor referente ao canto que o macho canta
     double rangeGeneCanto;      // tamanho da faixa de canto reconhecível
     double passoMutacao;        // tamanho do passo de mutação dado
     double probabilidadeMutacao;// probabilidade de ocorrer mutação
 
-    // será necessário uma variavel booleana para definir "status de relacionamento" de um pássaro
-
-    bool relacionamentoSerio;     // o pássaro já encontrou um par e aguarda a temporada de acasalamento
-
     // alguns métodos auxiliares privados
 
-    void condicoesDeContorno();           // aplica as condições de contorno do agente (DEVERIA ESTAR EM MOVIMENTACAO)
+    void condicoesDeContorno();           // aplica as condições de contorno do agente
     void namoraComigo();                  // torna um passaro macho 'parceiro' de um passaro femea
     void selecionarParceiro();            // método que identifica o parceiro de determinado agente
 };

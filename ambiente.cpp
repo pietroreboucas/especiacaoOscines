@@ -9,7 +9,6 @@ ambiente::ambiente()
     this->tamanhoDoMundo=1000;
     this->capacidadeDeSuporte=10000;
     this->contadorDeGeracoes=0;
-    this->especiacao=false;
 
     // vamos definir a capacidade do vetor de agentes como o triplo da capacidade de suporte
 
@@ -33,8 +32,8 @@ ambiente::ambiente()
 
 void ambiente::rodaGeracao()
 {
-    // cada geração corresponde a 1 ano
-    // o 12 mês do ano corresponde a época de acasalamento
+    // cada geracao corresponde a 1 ano
+    // o 12 mes do ano corresponde a época de acasalamento
 
     for(int mes=1;mes<=12;mes++)
     {

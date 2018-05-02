@@ -6,9 +6,6 @@ agente::agente(bool macho)
 {
     // esse construtor só servirá para criar os agentes que serão dispostos aleatóriamente no início da simulação
 
-    static int contador=0;                                       // adicionando um valor ao RG para o pássaro
-    this->RG=contador++;
-
     this->local.setX((double)rand()/RAND_MAX);                   // inicializando as variáveis do objeto "local"
     this->local.setY((double)rand()/RAND_MAX);                   // da classe "posição"
 
@@ -29,16 +26,13 @@ agente::agente(bool macho)
     // incicializando as demais variaveis
 
     this->ehMacho=macho;                                 // assinalando o agente como macho (ou fêmea)
-    this->relacionamentoSerio=false;                     // definindo o status de relacionamento do novo pássaro
+    this->emRelacionamento=false;                     // definindo o status de relacionamento do novo pássaro
     this->raioVizinhanca=10*this->movimento.getPasso();  // inicializando raio da vizinhança
 }
 
 agente::agente(bool macho, double geneMae, double genePai, posicao localMae)
 {
     // esse construtor criará os agentes que surgirão por reprodução sexuada
-
-    static int contador=0;                                       // adicionando um valor ao RG para o pássaro
-    this->RG=contador++;
 
     this->local=localMae;   // inicializando as variáveis do objeto "local" será iniciada com o posicionamento da mãe
 
@@ -91,21 +85,13 @@ agente::agente(bool macho, double geneMae, double genePai, posicao localMae)
     this->valorCanto=(this->geneCanto)+(this->rangeGeneCanto)*((double)rand()/RAND_MAX);;
 
     this->ehMacho=macho;                                 // assinalando o agente como macho (ou fêmea)
-    this->relacionamentoSerio=false;                     // definindo o status de relacionamento do novo pássaro
+    this->emRelacionamento=false;                     // definindo o status de relacionamento do novo pássaro
     this->raioVizinhanca=0.1;                            // inicializando raio da vizinhança
 }
 
 void agente::rodaModelo()
 {
-    // método que descreve o modelo de mundo do agente
-    // movimento ou parado são métodos da classe movimentação e estão descritos lá
-
-    if (this->ehMacho==false)                  // caso seja fêmea tenta encontrar um parceiro
-    {
-        this->selecionarParceiro();
-    }
-
-    if (relacionamentoSerio==true)             // pássaro em um relacionamento sério
+    if (emRelacionamento==true)             // pássaro em um relacionamento sério
     {
         this->movimento.parado();              // fica esperando a época de acasalamento
     }
@@ -191,7 +177,7 @@ double agente::getRaioVizinhanca() const
 
 bool agente::getRelacionamentoSerio() const
 {
-    return relacionamentoSerio;
+    return emRelacionamento;
 }
 
 bool agente::getEhMacho() const
@@ -233,7 +219,7 @@ void agente::namoraComigo()
 {
     // é chamado para o macho quando a fêmea quer estabelecer um relacionamento sério com ele
 
-    this->relacionamentoSerio=true;     // coloca seu relacionamentoSerio como true
+    this->emRelacionamento=true;     // coloca seu relacionamentoSerio como true
 }
 
 void agente::selecionarParceiro()
@@ -242,7 +228,7 @@ void agente::selecionarParceiro()
     
     // a probabilidade da fêmea escolher um determinado macho não foi colocada como variavel (sorry)
 
-    if (this->relacionamentoSerio==false)     // essa decisão só precisa ser tomada se ela não está em um relacionamento
+    if (this->emRelacionamento==false)     // essa decisão só precisa ser tomada se ela não está em um relacionamento
     {
         // o pedaço abaixo cria um vetor para sortear qual macho será avaliado primeiro
         
@@ -268,7 +254,7 @@ void agente::selecionarParceiro()
 
                     if (dado<0.01)      // aqui se define uma probabilidade da fêmea acasalar com o macho
                     {
-                        this->relacionamentoSerio=true;
+                        this->emRelacionamento=true;
 
                         // colocamos o ponteiro 'parceiro' apontando para o vizinho que a fêmea escolheu acasalar
 
@@ -284,5 +270,5 @@ void agente::selecionarParceiro()
 
 void agente::fimDeRelacionamento()
 {
-    this->relacionamentoSerio=false;
+    this->emRelacionamento=false;
 }

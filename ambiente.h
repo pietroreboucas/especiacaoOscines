@@ -28,7 +28,6 @@ private:
     vector <int> passaro;        // vetor usado para fazer sorteios
     double tamanhoDoMundo;      // tamanho do mundo
     int capacidadeDeSuporte;    // número máximo de pássaros na simulação
-    bool especiacao;            // se o critério de especiação foi atingido retorna true
     int contadorDeGeracoes;     // ... um contador de gerações
 
     // métodos definidos para gerenciar partes diferentes de "rodaGeracao"
