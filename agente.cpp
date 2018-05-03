@@ -4,100 +4,191 @@
 
 agente::agente(bool macho)
 {
-    // esse construtor só servirá para criar os agentes que serão dispostos aleatóriamente no início da simulação
+    // cria agentes que serão dispostos aleatóriamente no início da simulação
 
-    this->local.setX((double)rand()/RAND_MAX);                   // inicializando as variáveis do objeto "local"
-    this->local.setY((double)rand()/RAND_MAX);                   // da classe "posição"
+    this->idade=0;
+    this->contadorDeMeses=0;
+    this->tempoDeMaturacao=6;
 
-    this->movimento.setPasso(0.001);                             // inicializando as varáveis do objeto "caminhada"
-    this->movimento.setDirecao((double)rand()/RAND_MAX*360);     // da classe "movimentação"
+    this->adulto=true;
+    this->ehMacho=macho;                         // assinalando o agente como macho (ou fêmea)
+    this->flertando=false;                // definindo os passaros como solteiros
+    this->probabilidadeAcasalamento=0.05;
+
+    this->local.setX((double)rand()/RAND_MAX);                // variáveis de "local"
+    this->local.setY((double)rand()/RAND_MAX);                // da classe "posição"
+
+    this->movimento.setPasso(0.001);                          // varáveis de "caminhada"
+    this->movimento.setDirecao((double)rand()/RAND_MAX*360);  // da classe "movimentação"
     this->movimento.setAnguloDeVisao(40);
 
     this->passoMutacao=0.02;
     this->probabilidadeMutacao=0.01;
 
-    // vamos inicializar os valores do gene e o valor do canto inicial de cada agente da simulação
+    // vamos inicializar os valores do gene e o valor do canto inicial
     // o valor de geneCanto é o valor inicial do range de cantos reconhecíveis
 
-    this->rangeGeneCanto=1;
-    this->geneCanto=2.4+0.2*((double)rand()/RAND_MAX);
-    this->valorCanto=(this->geneCanto)+(this->rangeGeneCanto)*((double)rand()/RAND_MAX);
+    this->rangeCanto=1;
+    this->geneCantoI=2.4+0.2*((double)rand()/RAND_MAX);
+    this->geneCantoII=2.4+0.2*((double)rand()/RAND_MAX);
+    this->inicioRangeCanto=(geneCantoI+geneCantoII)/2;
+    this->valorCanto=(this->inicioRangeCanto)+(this->rangeCanto)*((double)rand()/RAND_MAX);
 
     // incicializando as demais variaveis
 
-    this->ehMacho=macho;                                 // assinalando o agente como macho (ou fêmea)
-    this->emRelacionamento=false;                     // definindo o status de relacionamento do novo pássaro
     this->raioVizinhanca=10*this->movimento.getPasso();  // inicializando raio da vizinhança
+    this->limparVizinhanca();
+    this->parceiro=nullptr;
 }
 
-agente::agente(bool macho, double geneMae, double genePai, posicao localMae)
+agente::agente(bool macho, double geneMaeI, double geneMaeII,
+               double genePaiI, double genePaiII, posicao localMae)
 {
     // esse construtor criará os agentes que surgirão por reprodução sexuada
 
-    this->local=localMae;   // inicializando as variáveis do objeto "local" será iniciada com o posicionamento da mãe
+    this->idade=0;
+    this->contadorDeMeses=0;
+    this->tempoDeMaturacao=6;
 
-    this->movimento.setPasso(0.01);                              // inicializando as varáveis do objeto "caminhada"
-    this->movimento.setDirecao((double)rand()/RAND_MAX*360);     // da classe "movimentação"
-    this->movimento.setAnguloDeVisao(40);                        // não é diferente do outro construtor
+    this->adulto=false;
+    this->ehMacho=macho;              // assinalando o agente como macho (ou fêmea)
+    this->flertando=false;     // definindo os passaros como solteiros
+    this->probabilidadeAcasalamento=0.05;
+
+    this->local=localMae;             // "local" será iniciada com o posicionamento da mãe
+
+    this->movimento.setPasso(0.001);                          // varáveis de "caminhada"
+    this->movimento.setDirecao((double)rand()/RAND_MAX*360);  // da classe "movimentação"
+    this->movimento.setAnguloDeVisao(40);
 
     this->passoMutacao=0.02;
     this->probabilidadeMutacao=0.01;
 
-    // vamos inicializar os valores do gene e o valor do canto inicial de cada agente da simulação
+    // vamos inicializar os valores do gene e o valor do canto inicial
 
-    this->rangeGeneCanto=1;
+    this->rangeCanto=1;
 
-    // temos que jogar um dado para decidir se o filhote terá o gene da mãe ou do pai
+    // temos que jogar um dado duas vezes para decidir os genes I e II do filhote
+    // primeiro para o geneI:
 
     double dado=(double)rand()/RAND_MAX;
 
     if (dado<0.5)
     {
-        this->geneCanto=geneMae;
+        this->geneCantoI=geneMaeI;
     }
     else
     {
-        this->geneCanto=genePai;
+        this->geneCantoI=genePaiI;
     }
 
-    // tambem queremos acrescentar uma chance de mutação em relação ao gene escolhido
+    // chance de mutação em relação ao gene escolhido
 
     dado=(double)rand()/RAND_MAX;    // rolando o dado para determinar mutação genética
 
     if (dado<this->probabilidadeMutacao)
     {
-        //mutação que pode ser 'positiva' (aumentando o valor do gene) ou 'negativa' (diminuindo o valor do gene)
+        //mutação que pode ser 'positiva' ou 'negativa'
 
         dado=(double)rand()/RAND_MAX;
 
         if  (dado<0.5)
         {
-            this->geneCanto+=this->passoMutacao;   // passo genético positivo
+            this->geneCantoI+=this->passoMutacao;   // passo genético positivo
         }
         else
         {
-            this->geneCanto-=this->passoMutacao;   // passo genético negativo
+            this->geneCantoI-=this->passoMutacao;   // passo genético negativo
         }
     }
 
-    // valor de canto aleatório dentro do range, depois faremos com que os machos aprendam seus cantos no ambiente
+    // agora para o gene II:
 
-    this->valorCanto=(this->geneCanto)+(this->rangeGeneCanto)*((double)rand()/RAND_MAX);;
+    dado=(double)rand()/RAND_MAX;
 
-    this->ehMacho=macho;                                 // assinalando o agente como macho (ou fêmea)
-    this->emRelacionamento=false;                     // definindo o status de relacionamento do novo pássaro
-    this->raioVizinhanca=0.1;                            // inicializando raio da vizinhança
+    if (dado<0.5)
+    {
+        this->geneCantoII=geneMaeII;
+    }
+    else
+    {
+        this->geneCantoII=genePaiII;
+    }
+
+    // chance de mutação em relação ao gene escolhido
+
+    dado=(double)rand()/RAND_MAX;    // rolando o dado para determinar mutação genética
+
+    if (dado<this->probabilidadeMutacao)
+    {
+        //mutação que pode ser 'positiva' ou 'negativa'
+
+        dado=(double)rand()/RAND_MAX;
+
+        if  (dado<0.5)
+        {
+            this->geneCantoII+=this->passoMutacao;   // passo genético positivo
+        }
+        else
+        {
+            this->geneCantoII-=this->passoMutacao;   // passo genético negativo
+        }
+    }
+
+    // usamos os genes para determinar o inicio do range
+
+    this->inicioRangeCanto=(geneCantoI+geneCantoII)/2;
+
+    // colocamos um valor aleatório inicial no canto dos machos;
+
+    this->valorCanto=(this->inicioRangeCanto)+(this->rangeCanto)*((double)rand()/RAND_MAX);
+
+    // incicializando as demais variaveis
+
+    this->raioVizinhanca=10*this->movimento.getPasso();  // inicializando raio da vizinhança
+    this->limparVizinhanca();
+    this->parceiro=nullptr;
 }
 
 void agente::rodaModelo()
 {
-    if (emRelacionamento==true)             // pássaro em um relacionamento sério
+    this->contadorDeMeses++;
+
+    if (this->ehMacho==true)    // se for macho
     {
-        this->movimento.parado();              // fica esperando a época de acasalamento
+        if (this->contadorDeMeses>this->tempoDeMaturacao)   // checa se ja ficou adulto
+        {
+            this->adulto=true;  // se ficou seta a variavel adulto como true
+        }
+
+        if (this->adulto==true)  // se for adulto
+        {
+            if (this->flertando==true)          // checa se esta em epoca de acasalamento
+            {
+                this->movimento.parado();       // se sim fica parado
+            }
+            else
+            {
+                this->movimento.movimento();    // caso não se move normalmente
+            }
+        }
+        else                   // caso seja filhote
+        {
+            this->aprenderCanto();              // modifica o canto
+            this->movimento.movimento();        // se move normalmente
+        }
     }
-    else                                       // pássaro solteiro
+    else                       // se for fêmea
     {
-        this->movimento.movimento();           // vai em busca de um parceiro
+        if (this->flertando==true)              // e estiver na epoca de acasalamento
+        {
+            this->movimento.parado();           // fica parada e
+            this->selecionarParceiro();         // seleciona um parceiro
+        }
+        else                                        // caso não seja epoca de acasalamento
+        {
+            this->movimento.movimento();        // se move normalmente
+        }
     }
 }
 
@@ -115,39 +206,30 @@ void agente::atuacao()
 
 void agente::aprenderCanto()
 {
-    // é chamado para escolher o valor do canto do agente filhote
+    // sera chamado a cada iteracao de um filhote macho para modificar seu canto
 
     // definindo algumas variaveis auxiliares
 
-    double cantoTotal=0;                    // onde vamos somar todos os cantos de uma vizinhança
-    double cantoAuxiliar=0;                 // usaremos para armazenar os cantos e testar se estão no range do filhote
-    int numeroDeCantos=0;                   // número de cantos armazenados, que usaremos para fazer a média
+    double cantoTotal=0;         // onde vamos somar todos os cantos de uma vizinhança
+    int numeroDeCantos=0;        // número de cantos armazenados, que usaremos para fazer a média
 
-    for (int i=0; i<(this->vizinhanca.size()); i++)            // para cada canto na vizinhança
+    if (this->vizinhanca.size()>0)
     {
-        // armazenamos o valor do vizinho no cantoAuxiliar
-
-        cantoAuxiliar=this->vizinhanca[i]->getValorCanto();
-
-        // testamos se o canto Auxiliar está dentro do range do filhote
-
-        if (cantoAuxiliar>=(this->geneCanto) && cantoAuxiliar<=((this->geneCanto)+(this->rangeGeneCanto)))
+        for (int i=0; i<(this->vizinhanca.size()); i++)   // para cada canto na vizinhança
         {
-            // caso esteja, somamos mais 1 canto no numeroDeCantos e somamos o canto no cantoTotal
+            // somamos os cantos da vizinhanca na variavel canto total
 
-            numeroDeCantos++;
-            cantoTotal+=cantoAuxiliar;
+            cantoTotal+=this->vizinhanca[i]->getValorCanto();
+
+            numeroDeCantos++;     // somamos mais um ao valor do numero de cantos
         }
+
+        double cantoMedio=(cantoTotal/numeroDeCantos);    // calculamos a média
+
+        this->valorCanto=(valorCanto+cantoMedio)/2;       // fazemos a media com o que ele ja sabe
     }
 
-    if (numeroDeCantos>0)
-    {
-        double canto=(cantoTotal/numeroDeCantos);     // calculamos a média e setamos o valor do canto
-
-        this->valorCanto=canto;
-    }
-
-    // da maneira como está definido ele não vai funcionar caso tente aprender e não tenha ninguem para ensinar
+    // da maneira como está definido ele so vai aprender se tiver quem ouvir
 }
 
 
@@ -175,11 +257,6 @@ double agente::getRaioVizinhanca() const
     return raioVizinhanca;
 }
 
-bool agente::getRelacionamentoSerio() const
-{
-    return emRelacionamento;
-}
-
 bool agente::getEhMacho() const
 {
     return ehMacho;
@@ -190,9 +267,9 @@ agente *agente::getParceiro() const
     return parceiro;
 }
 
-double agente::getGeneCanto() const
+double agente::getGeneCantoI() const
 {
-    return geneCanto;
+    return geneCantoI;
 }
 
 double agente::getValorCanto() const
@@ -203,6 +280,31 @@ double agente::getValorCanto() const
 vector<agente *> agente::getVizinhanca() const
 {
     return vizinhanca;
+}
+
+bool agente::getAdulto() const
+{
+    return adulto;
+}
+
+void agente::setFlertando(bool value)
+{
+    flertando = value;
+}
+
+int agente::getIdade() const
+{
+    return idade;
+}
+
+double agente::getGeneCantoII() const
+{
+    return geneCantoII;
+}
+
+bool agente::getFlertando() const
+{
+    return flertando;
 }
 
 void agente::condicoesDeContorno()
@@ -219,16 +321,14 @@ void agente::namoraComigo()
 {
     // é chamado para o macho quando a fêmea quer estabelecer um relacionamento sério com ele
 
-    this->emRelacionamento=true;     // coloca seu relacionamentoSerio como true
+    this->flertando=true;     // coloca seu relacionamentoSerio como true
 }
 
 void agente::selecionarParceiro()
 {
-    // é um método que só será usado pelas fêmeas que determina se elas irão acasalar com um macho (e qual deles)
-    
-    // a probabilidade da fêmea escolher um determinado macho não foi colocada como variavel (sorry)
+    // usado pelas fêmeas para selecionar um macho
 
-    if (this->emRelacionamento==false)     // essa decisão só precisa ser tomada se ela não está em um relacionamento
+    if (this->flertando==false)     // se ela não está em um relacionamento
     {
         // o pedaço abaixo cria um vetor para sortear qual macho será avaliado primeiro
         
@@ -239,28 +339,28 @@ void agente::selecionarParceiro()
         }
         shuffle(sorteio.begin(),sorteio.end(),std::default_random_engine(1));
 
-        // uma vez feito um o embaralhamento do vetor de sorteio a fêmea irá avaliar cada um separadamente
-        // e haverá uma probabilidade de que ela escollha acasalar com cada macho
+        // uma vez feito um o sorteio a fêmea irá avaliar cada um separadamente na ordem
 
         for (int j=0; j<this->vizinhanca.size(); j++)
         {
-            if (this->vizinhanca[sorteio[j]]->getRelacionamentoSerio()==false)   // elas estão procurando solteiros
+            if (this->vizinhanca[sorteio[j]]->getFlertando()==false)   // apenas solteiros
             {
                 double cantoAuxiliar=this->vizinhanca[sorteio[j]]->getValorCanto();
 
-                if (cantoAuxiliar>=(this->geneCanto) && cantoAuxiliar<=((this->geneCanto)+(this->rangeGeneCanto)))
+                if (cantoAuxiliar>=(this->inicioRangeCanto) &&  // se está dentro do range
+                    cantoAuxiliar<=((this->inicioRangeCanto)+(this->rangeCanto)))
                 {
                     double dado=(double)rand()/RAND_MAX;
 
-                    if (dado<0.01)      // aqui se define uma probabilidade da fêmea acasalar com o macho
+                    if (dado<this->probabilidadeAcasalamento)   // avaliamos a probabilidade
                     {
-                        this->emRelacionamento=true;
+                        this->flertando=true;
 
-                        // colocamos o ponteiro 'parceiro' apontando para o vizinho que a fêmea escolheu acasalar
+                        // colocamos o ponteiro 'parceiro' apontando o macho
 
                         this->parceiro=this->vizinhanca[sorteio[j]];
-                        this->parceiro->namoraComigo();     // coloca o parceiro em relacionamento sério
-                        break;                                           // tendo como parceiro a fêmea
+                        this->parceiro->namoraComigo();  // coloca o parceiro em
+                        break;                           // relacionamento sério com a fêmea
                     }
                 }
             }
@@ -268,7 +368,8 @@ void agente::selecionarParceiro()
     }
 }
 
-void agente::fimDeRelacionamento()
+void agente::fimDeAcasalamento()
 {
-    this->emRelacionamento=false;
+    this->flertando=false;
+    this->idade++;
 }

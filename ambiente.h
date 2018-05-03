@@ -25,18 +25,20 @@ public:
 
 private:
     vector <agente> bando;      // vetor onde serão colocados os agentes
-    vector <int> passaro;        // vetor usado para fazer sorteios
+    vector <int> passaro;       // vetor usado para fazer sorteios
     double tamanhoDoMundo;      // tamanho do mundo
     int capacidadeDeSuporte;    // número máximo de pássaros na simulação
     int contadorDeGeracoes;     // ... um contador de gerações
+    bool epocaDeAcasalamento;   // indica se está em epoca de acasalamento
+    int idadeMaxima;
 
     // métodos definidos para gerenciar partes diferentes de "rodaGeracao"
 
     void atualizaPercepcao(int i);  // atualiza quem está na vizinhança do passaro i
     void rodaAcasalamento();        // faz com pássaros em relacionamento sério tenham filhos
-    void genocidio();               // mata pássaros aleatóriamente até K
-    void acabandoRelacionamentos(); // seta todos os agente como relacionamenteoSerio=false
-    void aulaDeCanto();             // faz com que os pássaros machos aprendam seus cantos
+    void mortesPorIdade();          // mata os passaros que passaram da idade maxima
+    void mortesAleatorias();        // mata passaros aleatóriamente até K
+    void acabandoAcasalamento();    // seta todos os agente como relacionamenteoSerio=false
 
     // alguns outros métodos privados
 

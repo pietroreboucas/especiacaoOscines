@@ -9,6 +9,8 @@ ambiente::ambiente()
     this->tamanhoDoMundo=1000;
     this->capacidadeDeSuporte=10000;
     this->contadorDeGeracoes=0;
+    this->epocaDeAcasalamento=false;
+    this->idadeMaxima=3;
 
     // vamos definir a capacidade do vetor de agentes como o triplo da capacidade de suporte
 
@@ -37,28 +39,29 @@ void ambiente::rodaGeracao()
 
     for(int mes=1;mes<=12;mes++)
     {
-        if (mes==12)
+        if (mes==12) this->epocaDeAcasalamento=true;
+
+        // embaralhamos o vetor de sorteio
+
+        shuffle(passaro.begin(),passaro.end(),std::default_random_engine(1));
+
+        // vamos então cada agente vai agir na ordem do vetor de sorteio
+
+        for (unsigned int j=0; j<this->bando.size(); j++)
+        {
+            this->atualizaPercepcao(this->passaro[j]);        // percepcao
+            this->bando[this->passaro[j]].rodaModelo();       // modelo de mundo
+            this->bando[this->passaro[j]].atuacao();          // atuacao
+        }
+
+        if (epocaDeAcasalamento==true)
         {
             this->rodaAcasalamento();
-            this->acabandoRelacionamentos();
-    //        this->atualizaPercepcao();
-    //        this->aulaDeCanto();
-            this->genocidio();
-        }
-        else
-        {
-            // primeiramente embaralhamos o vetor de sorteio
-
-            shuffle(passaro.begin(),passaro.end(),std::default_random_engine(1));
-
-            // vamos então cada agente vai agir na ordem do vetor de sorteio
-
-            for (int j=0; j<this->bando.size(); j++)
-            {
-                this->atualizaPercepcao(this->passaro[j]);   // percepcao
-                this->bando[this->passaro[j]].rodaModelo();  // modelo de mundo
-                this->bando[this->passaro[j]].atuacao();     // atuacao
-            }
+            this->mortesPorIdade();
+            this->mortesAleatorias();
+            this->acabandoAcasalamento();      // revisar
+            this->epocaDeAcasalamento=false;
+            this->contadorDeGeracoes++;
         }
     }
 }
@@ -88,12 +91,12 @@ bool ambiente::getEhMacho(int i)
 
 bool ambiente::getRelacionamentoSerio(int i)
 {
-    return this->bando[i].getRelacionamentoSerio();
+    return this->bando[i].getFlertando();
 }
 
 double ambiente::getGeneCanto(int i)
 {
-    return this->bando[i].getGeneCanto();
+    return this->bando[i].getGeneCantoI();
 }
 
 int ambiente::getContadorDeGeracoes() const
@@ -105,52 +108,57 @@ void ambiente::atualizaPercepcao(int i)
 {
     double distancia;   // distancia entre os agentes i e j
 
-    this->bando[i].limparVizinhanca();                // limpamos a vizinhança
+    this->bando[i].limparVizinhanca();                    // limpamos a vizinhança
 
-    for (int j=0; j<this->bando.size(); j++)          // então para cada outro agente
+    if (this->epocaDeAcasalamento==true)
     {
+        this->bando[i].setFlertando(true);
+    }
 
-        if (this->bando[j].getEhMacho()==true)        // se for macho
+    if (((this->bando[i].getEhMacho()==true) & (this->bando[i].getAdulto()==false))^
+       ((this->bando[i].getEhMacho()==false) & (this->bando[i].getFlertando()==true)))
+    {
+        for (unsigned int j=0; j<this->bando.size(); j++) // então para cada outro agente
         {
-            distancia=this->calcularDistancia(i,j);            // calculamos a distância
-            if (distancia<this->bando[i].getRaioVizinhanca())  // caso menor que o raioVizinhanca
+
+            if (this->bando[j].getEhMacho()==true)        // se for macho
             {
-                this->bando[i].adicionarVizinhanca(&this->bando[j]);   // adiciona a vizinhança
+                distancia=this->calcularDistancia(i,j);            // calculamos a distância
+                if (distancia<this->bando[i].getRaioVizinhanca())  // se menor que raioVizinhanca
+                {
+                    this->bando[i].adicionarVizinhanca(&this->bando[j]); // adiciona a vizinhança
+                }
             }
         }
     }
-
 }
 
 void ambiente::rodaAcasalamento()
 {
-    // vamos fazer com que cada fêmea em um relacionamentoSerio gere dois passaros, um macho e uma fêmea
+    // vamos fazer com que cada fêmea em um relacionamento gere dois passaros um de cada sexo
     
-    for (int i=0; i<this->bando.size(); i++)      // pegaremos um a um os agentes
+    for (unsigned int i=0; i<this->bando.size(); i++)      // pegaremos um a um os agentes
     {
         if (this->bando[i].getEhMacho()==false)   // que são fêmeas
         {
-            if(this->bando[i].getRelacionamentoSerio()==true)   // que estão em um relacionamentoSerio
+            if(this->bando[i].getFlertando()==true)   // que estão em um relacionamento
             {
                 // agora precisaremos do construtor de agente que criamos para reprodução sexuada
 
-                // primeiramente pegamos os valores do geneMae, genePai, o localMae e a vizinhança da mãe
+                // primeiramente pegamos os valores necessarios para criacao do filhote
 
-                double geneMae=this->bando[i].getGeneCanto();
-                double genePai=this->bando[i].getParceiro()->getGeneCanto();
+                double geneMaeI=this->bando[i].getGeneCantoI();
+                double geneMaeII=this->bando[i].getGeneCantoII();
+                double genePaiI=this->bando[i].getParceiro()->getGeneCantoI();
+                double genePaiII=this->bando[i].getParceiro()->getGeneCantoII();
                 posicao localMae=this->bando[i].getLocal();
 
                 // vamos então criar um macho e uma fêmea e acrescentar ao vetor bando
 
-                // essa parte comentada abaixo faz com que o agente surja na vizinhança da mãe, ao invés de surgir
-                // no mesmo sítio que ela
-                /*double dado=(double)rand()/RAND_MAX;
-                localMae.acumulaX(-0.1+dado*0.2);
-                dado=(double)rand()/RAND_MAX;
-                localMae.acumulaY(-0.1+dado*0.2);*/
+                // criando a fêmea:
 
-                agente winnie(false, geneMae, genePai, localMae);     // criando a fêmea
-                this->bando.push_back(winnie);                        // acrescentando ao vetor
+                agente winnie(false, geneMaeI, geneMaeII, genePaiI, genePaiII, localMae);
+                this->bando.push_back(winnie);                  // acrescentando ao vetor
 
                 /*localMae=this->bando[i].getLocal();
                 dado=(double)rand()/RAND_MAX;
@@ -158,20 +166,35 @@ void ambiente::rodaAcasalamento()
                 dado=(double)rand()/RAND_MAX;
                 localMae.acumulaY(-0.1+dado*0.2);*/
 
-                agente picapau(true, geneMae, genePai, localMae);      // criando o macho
-                this->bando.push_back(picapau);                        // acrescentando ao vetor
+                // criando o macho
+
+                agente picapau(true, geneMaeI, geneMaeII, genePaiI, genePaiII, localMae);
+                this->bando.push_back(picapau);                  // acrescentando ao vetor
             }
         }
-    }     
+    }
 }
 
-void ambiente::genocidio()
+void ambiente::mortesPorIdade()
 {
-    // primeiramente vamos misturar as posições dos agentes no vetor de sorteio para que nenhum deles seja privilegiado
+    for (int i=(this->bando.size()-1);i>=0;i--)            // essa contagem é decrescente
+    {
+        if (this->bando[i].getIdade()>=this->idadeMaxima)  // se a idade for maior/igual a maxima
+        {
+            this->bando.erase(bando.begin()+i);            // apaga o passaro
+        }
+    }
+}
+
+void ambiente::mortesAleatorias()
+{
+    // CHECAR ESSE ALGORITIMO DEPOIS (otimizar)
+
+    // primeiramente vamos misturar as posições dos agentes no vetor de sorteio
 
     this->passaro.clear();   // limpamos o vetor de sorteio
 
-    for (int i=0; i<this->bando.size(); i++)   // criamos um novo com o número certo de agentes
+    for (unsigned int i=0; i<this->bando.size(); i++) // criamos um com o número certo de agentes
     {
         this->passaro.push_back(i);
     }
@@ -185,9 +208,16 @@ void ambiente::genocidio()
     {
         int mortes=(this->bando.size()-capacidadeDeSuporte);
 
-        for (int i=0; i<mortes; i++)
+        for (int j=0; j<mortes; j++)
         {
-            this->bando.erase(this->bando.begin()+this->passaro[i]);
+            int l=j;
+
+            while (this->passaro[j]>=this->bando.size())
+            {
+                l++;
+            }
+
+            this->bando.erase(bando.begin()+this->passaro[l]);
         }
     }
 
@@ -195,44 +225,30 @@ void ambiente::genocidio()
 
     this->passaro.clear();   // limpamos o vetor de sorteio
 
-    for (int i=0; i<this->bando.size(); i++)   // criamos um novo com o número certo de agentes
+    for (unsigned int m=0; m<this->bando.size(); m++) // criamos um com o número certo de agentes
     {
-        this->passaro.push_back(i);
+        this->passaro.push_back(m);
     }
 }
 
-void ambiente::acabandoRelacionamentos()
+void ambiente::acabandoAcasalamento()
 {
-    for (int i=0; i<this->bando.size(); i++)
+    for (unsigned int i=0; i<this->bando.size(); i++)
     {
-        this->bando[i].fimDeRelacionamento();
-    }
-}
-
-void ambiente::aulaDeCanto()
-{
-    int primeiroFilhote=this->capacidadeDeSuporte;
-    int numeroFilhotes=this->bando.size()-this->capacidadeDeSuporte;
-
-    for (int i=primeiroFilhote; i<(primeiroFilhote+numeroFilhotes); i++)
-    {
-        if (this->bando[i].getEhMacho()==true)
-        {
-            this->bando[i].aprenderCanto();
-        }
+        this->bando[i].fimDeAcasalamento();
     }
 }
 
 double ambiente::calcularDistancia(int i, int j)
 {
-    double distancia=0;      // váriavel que usaremos para armazenar a distância entre dois agentes
+    double distancia=0;      // distância entre dois agentes
 
-    posicao localI,localJ;   // objetos para armazenar temporariamente os objetos "local" de ambos os agentes
+    posicao localI,localJ;   // objetos "local" de ambos os agentes
 
-    localI=this->bando[i].getLocal();   // armazenando as localizações de cada agente em um dos objetos
+    localI=this->bando[i].getLocal();
     localJ=this->bando[j].getLocal();
 
-    // vamos agora usar essas informações que armazenamos para calcular a distância entre eles usando pitagoras
+    // vamos calcular a distância entre eles usando pitagoras
 
     double deltaX,deltaY;    // váriaveis auxíliares para o calculo da distância
 
